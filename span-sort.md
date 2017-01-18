@@ -1,5 +1,5 @@
 Currently, there is no way to sort native or fixed memory 
-(e.g. coming from a pointer) in .NET, this proposal wants to fix that 
+(e.g. coming from a pointer) in .NET, this proposal intends to fix that 
 by adding sorting methods to `Span<T>`, but also proposes some different 
 overloads than seen on `Array` to allow for inlined comparisons via 
 the possibility to use value type comparers.
@@ -12,14 +12,40 @@ var span = new Span<int>(ptr, length);
 span.Sort(); // Sort elements in native memory
 ```
 
+```csharp
+struct ReverseComparer : IComparer<int>
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int Compare(int a, int b)
+    {
+        if (a == b) { return 0; }
+        if (a > b) { return -1; }
+        return 1;
+    }
+}
+
+var nativeSpan = new Span<int>(ptr, length);
+// Sort elements in native memory, in reverse order with inlined Compare,
+// without heap allocation
+nativeSpan.Sort(new ReverseComparer()); 
+
+var a = new int[1024];
+// ... fill a
+var managedSpan = new Span<int>(a);
+// Sort elements in managed memory, in reverse order with inlined Compare,
+// without heap allocation
+managedSpan.Sort(new ReverseComparer()); 
+```
+
 // TODO: More examples, especially, non-alloc, inline compares
 
 The argumentation for adding this is to:
  * To increase the efficiency of code doing this and prevent people from reinventing the wheel.
  * Allow performance optimizations depending on memory type and contents.
+ * Allow sorting on contiguous memory of any kind.
 
 ### Proposed API
-Add different `Sort` methods to the existing `Span<T>` API:
+Add a set of `Sort` methods to the existing `Span<T>` API:
 ```csharp
 public class Span<T>
 {
@@ -36,14 +62,16 @@ Alternatively, static methods could be added to non-generic static class `Span`,
 
 ### Open Questions
 Open question is whether this should be added as member methods or static class methods like in `Array`. 
-I would argue for a member methods, since this will depend on internal representation, 
+I would argue for member methods, since this might depend on internal representation (e.g. managed or unmanaged memory), 
 and would perhaps allow for the JIT intrinsic version to do optimizations that a static extension method can't. 
-If that is a valid argument?
 
 @karelz @jkotas @omariom @benaadams @jamesqo 
 
-### Static Array.Sort methods
-https://github.com/dotnet/corefx/blob/master/src/System.Runtime/ref/System.Runtime.cs
+### Existing Sort APIs
+A non-exhaustive list of existing sorting APIs is given below.
+
+#### `Array.Sort` Static Methods
+Found in https://github.com/dotnet/corefx/blob/master/src/System.Runtime/ref/System.Runtime.cs
 
 ```csharp
 public static void Sort(System.Array array) { }
@@ -65,7 +93,25 @@ public static void Sort<TKey, TValue>(TKey[] keys, TValue[] items, int index, in
 public static void Sort<TKey, TValue>(TKey[] keys, TValue[] items, int index, int length, System.Collections.Generic.IComparer<TKey> comparer) { }
 ```
 
-### List.Sort methods
-TODO
+#### `List<T>.Sort` Member Methods
+Found in https://github.com/dotnet/corefx/blob/master/src/System.Collections/ref/System.Collections.cs
 
-Find other examples...
+```csharp
+public partial class List<T> : System.Collections.Generic.ICollection<T>, System.Collections.Generic.IEnumerable<T>, System.Collections.Generic.IList<T>, System.Collections.Generic.IReadOnlyCollection<T>, System.Collections.Generic.IReadOnlyList<T>, System.Collections.ICollection, System.Collections.IEnumerable, System.Collections.IList
+{
+    public void Sort() { }
+    public void Sort(System.Collections.Generic.IComparer<T> comparer) { }
+    public void Sort(System.Comparison<T> comparison) { }
+    public void Sort(int index, int count, System.Collections.Generic.IComparer<T> comparer) { }
+}
+```
+
+#### LINQ `OrderBy` Extension Methods
+Found in https://github.com/dotnet/corefx/blob/master/src/System.Linq/ref/System.Linq.cs 
+
+```csharp
+public static System.Linq.IOrderedEnumerable<TSource> OrderBy<TSource, TKey>(this System.Collections.Generic.IEnumerable<TSource> source, System.Func<TSource, TKey> keySelector) { throw null; }
+public static System.Linq.IOrderedEnumerable<TSource> OrderBy<TSource, TKey>(this System.Collections.Generic.IEnumerable<TSource> source, System.Func<TSource, TKey> keySelector, System.Collections.Generic.IComparer<TKey> comparer) { throw null; }
+public static System.Linq.IOrderedEnumerable<TSource> OrderByDescending<TSource, TKey>(this System.Collections.Generic.IEnumerable<TSource> source, System.Func<TSource, TKey> keySelector) { throw null; }
+public static System.Linq.IOrderedEnumerable<TSource> OrderByDescending<TSource, TKey>(this System.Collections.Generic.IEnumerable<TSource> source, System.Func<TSource, TKey> keySelector, System.Collections.Generic.IComparer<TKey> comparer) { throw null; }
+```
