@@ -1,21 +1,17 @@
-Currently, there is no way to sort native or fixed memory 
-(e.g. coming from a pointer) in .NET, this proposal intends to fix that 
-by adding sorting methods to `Span<T>`, but also proposes some different 
-overloads than seen on `Array` to allow for inlined comparisons via 
-the possibility to use value type comparers.
+Currently, there is no way to sort native or fixed memory (e.g. coming from a pointer) in .NET, this proposal intends to fix that by adding sorting extension methods to `Span<T>`, but also proposes some different overloads than seen on `Array` to allow for inlined comparisons via the possibility to use value type comparers.
 
 ### Proposed API
-Add a set of `Sort` methods to the existing `Span<T>` API:
+Add a set of `Sort` extension methods to `Span<T>` in `SpanExtensions`:
 ```csharp
-public class Span<T>
+public static class SpanExtensions
 {
-     public void Sort();
-     public void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<T>;
-     public void Sort(System.Comparison<T> comparison); // Convenience overload
+     public void Sort<T>(this Span<T> span);
+     public void Sort<T, TComparer>(this Span<T> span, TComparer comparer) where TComparer : IComparer<T>;
+     public void Sort<T>(this Span<T> span, System.Comparison<T> comparison); // Convenience overload
      
-     public void Sort<TValue>(Span<TValue> items);
-     public void Sort<TValue, TComparer>(Span<TValue> items, TComparer comparer) where TComparer : IComparer<T>;
-     public void Sort<TValue>(Span<TValue> items, System.Comparison<T> comparison); // Convenience overload
+     public void Sort<TKey, TValue>(this Span<TKey> keys, Span<TValue> items);
+     public void Sort<TKey, TValue, TComparer>(this Span<TKey> keys, Span<TValue> items, TComparer comparer) where TComparer : IComparer<T>;
+     public void Sort<TKey, TValue>(this Span<TKey> keys, Span<TValue> items, System.Comparison<T> comparison); // Convenience overload
 }
 ```
 
@@ -57,15 +53,19 @@ The argumentation for adding this is:
  * Allow performance optimizations depending on memory type and contents.
  * Allow sorting on contiguous memory of any kind.
 
+#### Use Cases
+In almost any domain where a high volume of data is processed with sorting being one operation and memory management (e.g. memory recycling, buffer pooling, native memory) is a must to achieve high performance with minimal latency, these sorts would be useful. Example domains are database engines (think indexing), computer vision, artificial intelligence etc.
+
+A concrete example could be in the training of Random Forests some methods employ feature sorting (with indeces) to find decision boundaries on. This involves a lot of data and data that can originate from unmanaged memory.
 
 ### Open Questions
-Open question is whether this should be added as member methods or static class methods like in `Array`.
-Or perhaps as extension methods.
+The API relies on being able to depend upon `System.Collections.Generic`, could this be an issue?
 
-I would argue for member methods, since this might depend on internal representation (e.g. managed or unmanaged memory), 
-and would perhaps allow for the JIT intrinsic version to do optimizations that a static extension method can't. 
+@karelz @jkotas @jamesqo 
 
-@karelz @jkotas @omariom @benaadams @jamesqo 
+### Updates
+UPDATE 1: Change API to be defined as extension methods.
+
 
 ### Existing Sort APIs
 A non-exhaustive list of existing sorting APIs is given below for comparison.
