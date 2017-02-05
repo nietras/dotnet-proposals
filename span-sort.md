@@ -100,6 +100,8 @@ In almost any domain where a high volume of data is processed with sorting being
 A concrete example could be in the training of Random Forests some methods employ feature sorting (with indeces) to find decision boundaries on. This involves a lot of data and data that can originate from unmanaged memory.
 
 ### Open Questions
+An important question regarding this proposal is whether the pattern with generic parameter `TComparer` (e.g. constrained to `where TComparer : IComparer<T>`) is a pattern that can be approved. This pattern allows for inlineable comparers at the cost of increased code size, if no value type comparers are used, there should be no difference. This pattern is also used in the proposal for `BinarySearch` in https://github.com/dotnet/corefx/issues/15818
+
 The API relies on being able to depend upon `System.Collections.Generic`, could this be an issue?
 
 @karelz @jkotas @jamesqo 
@@ -107,7 +109,7 @@ The API relies on being able to depend upon `System.Collections.Generic`, could 
 ### Updates
 UPDATE 1: Change API to be defined as extension methods.
 UPDATE 2: Add compounded type usage.
-
+UPDATE 3: Add link to BinarySearch and point on the pattern used.
 
 ### Existing Sort APIs
 A non-exhaustive list of existing sorting APIs is given below for comparison.

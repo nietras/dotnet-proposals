@@ -196,12 +196,14 @@ The argumentation for adding this is:
  * Allow binary searching on contiguous memory of any kind.
 
 ### Open Questions
+An important question regarding this proposal is whether the pattern with generic parameter `TComparer` (e.g. constrained to `where TComparer : IComparer<T>`) or `TComparable` (constrained to `where TComparable : IComparable<T>`) is a pattern that can be approved. This pattern allows for inlineable comparables/comparers at the cost of increased code size, if no value type comparables/comparers are used, there should be no difference. This pattern is also used in the proposal for `Sort` in https://github.com/dotnet/corefx/issues/15329
+
 The API relies on being able to depend upon `System.Collections.Generic`, could this be an issue?
 
 @karelz @jkotas @KrzysztofCwalina @jamesqo
 
 ### Updates
-
+UPDATE 1: Add link to Sort and point on the pattern used.
 
 ### Existing Sort APIs
 A non-exhaustive list of existing binary search APIs is given below for comparison.
