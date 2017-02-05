@@ -56,6 +56,39 @@ Span<int> span = GetSomeSpan();
 span.Sort((a, b) => a == b ? 0 : (a > b ? -1 : 1)); 
 ```
 
+#### Sorting Compound Type
+```csharp
+struct Compound
+{
+    public float FeatureValue;
+    public int FeatureIndex;
+    public object Payload;
+}
+
+struct InlineableFeatureValueComparer : IComparer<Compound>
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int Compare(Compound a, Compound b)
+    {
+        if (a.FeatureValue == b.FeatureValue) { return 0; }
+        if (a.FeatureValue < b.FeatureValue) { return -1; }
+        return 1;
+    }
+}
+
+var span = new Span<Compound>();
+
+span.Sort();
+
+// Inlineable struct comparer
+var comparer = new InlineableFeatureValueComparer();
+span.Sort(comparer);
+
+// Lambda comparer
+span.Sort((a, b) => a.FeatureValue == b.FeatureValue ? 0 : 
+    (a.FeatureValue < b.FeatureValue ? -1 : 1));
+```
+
 The argumentation for adding this is:
  * To increase the efficiency of code doing sorting and prevent people from reinventing the wheel.
  * Allow performance optimizations depending on memory type and contents.
@@ -73,6 +106,7 @@ The API relies on being able to depend upon `System.Collections.Generic`, could 
 
 ### Updates
 UPDATE 1: Change API to be defined as extension methods.
+UPDATE 2: Add compounded type usage.
 
 
 ### Existing Sort APIs
