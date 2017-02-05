@@ -20,16 +20,19 @@ namespace System
         public static int BinarySearch<T, TComparer>(this ReadOnlySpan<T> span, T value, TComparer comparer) 
             where TComparer : IComparer<T>
         { throw null; }
+    }
 
+    public static class SpanExtensions
+    {
         // NOTE: Due to the less-than-ideal generic type inference in the face of implicit conversions,
-        //       we need the overloads taking Span<T>.
+        //       we need the overloads taking Span<T>. These simply forward to ReadOnlySpanExtensions.
         public static int BinarySearch<T, TComparable>(this Span<T> span, TComparable comparable) 
             where TComparable : IComparable<T> 
-        { return BinarySearch((ReadOnlySpan<T>)span, comparable); }
+        { return ReadOnlySpanExtensions.BinarySearch<T, TComparable>(span, comparable); }
 
         public static int BinarySearch<T, TComparer>(this Span<T> span, T value, TComparer comparer) 
             where TComparer : IComparer<T>
-        { return BinarySearch((ReadOnlySpan<T>)span, value, comparer); }
+        { return ReadOnlySpanExtensions.BinarySearch(span, value, comparer); }
     }
 
     public static class UsageForInt
