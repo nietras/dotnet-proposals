@@ -13,7 +13,7 @@ namespace System
 
     public static class ReadOnlySpanExtensions
     {
-        // Convenience overload, that is thin wrapper around generic TComparable version
+        // Convenience overload
         public static int BinarySearch<T>(this ReadOnlySpan<T> span, IComparable<T> comparable) 
         { return BinarySearch<T, IComparable<T>>(span, comparable); }
 
@@ -28,7 +28,7 @@ namespace System
 
     public static class SpanExtensions
     {
-        // Convenience overload, that is thin wrapper around generic TComparable version
+        // Convenience overload
         public static int BinarySearch<T>(this Span<T> span, IComparable<T> comparable) 
         { return BinarySearch<T, IComparable<T>>(span, comparable); }
 
