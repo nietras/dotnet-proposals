@@ -1,13 +1,15 @@
 Currently, there is no way to binary search in sorted native or fixed memory (e.g. coming from a pointer) in .NET, this proposal intends to fix that by adding binary search extension methods to `ReadOnlySpan<T>` (and currently also `Span<T>` due to type inference issues), but also proposes some different overloads than seen on `Array` to allow for inlined comparisons via the possibility to use value type comparables and comparers.
 
-This is a draft proposal with the intend to get feedback on possible solutions (if any) to the generic type inference issue in the face of implicit conversion of `Span<T>` to `ReadOnlySpan<T>`.
-
 ### Proposed API
 Add a set of `BinarySearch` extension methods to `ReadOnlySpan<T>` in `ReadOnlySpanExtensions`, 
 (and currently the same for normal `Span<T>` due to generic type inference issues):
 ```csharp
     public static class ReadOnlySpanExtensions
     {
+        // Convenience overload
+        public static int BinarySearch<T>(this ReadOnlySpan<T> span, IComparable<T> comparable) 
+        { return BinarySearch<T, IComparable<T>>(span, comparable); }
+
         public static int BinarySearch<T, TComparable>(
             this ReadOnlySpan<T> span, TComparable comparable) 
             where TComparable : IComparable<T> 
@@ -21,6 +23,10 @@ Add a set of `BinarySearch` extension methods to `ReadOnlySpan<T>` in `ReadOnlyS
 
     public static class SpanExtensions
     {
+        // Convenience overload
+        public static int BinarySearch<T>(this Span<T> span, IComparable<T> comparable) 
+        { return BinarySearch<T, IComparable<T>>(span, comparable); }
+
         // NOTE: Due to the less-than-ideal generic type inference 
         //       in the face of implicit conversions,
         //       we need the overloads taking Span<T>. 
@@ -196,7 +202,11 @@ The argumentation for adding this is:
  * Allow binary searching on contiguous memory of any kind.
 
 ### Open Questions
-An important question regarding this proposal is whether the pattern with generic parameter `TComparer` (e.g. constrained to `where TComparer : IComparer<T>`) or `TComparable` (constrained to `where TComparable : IComparable<T>`) is a pattern that can be approved. This pattern allows for inlineable comparables/comparers at the cost of increased code size, if no value type comparables/comparers are used, there should be no difference. This pattern is also used in the proposal for `Sort` in https://github.com/dotnet/corefx/issues/15329
+An important question regarding this proposal is whether the pattern with generic parameter `TComparer` (e.g. constrained to `where TComparer : IComparer<T>`) or `TComparable` (constrained to `where TComparable : IComparable<T>`) is a pattern that can be approved. This pattern allows for inlineable comparables/comparers at the cost of increased code size, if no value type comparables/comparers are used, there should be no difference. This pattern is also used in the proposal for `Sort` in https://github.com/dotnet/corefx/issues/15329, that has been approved.
+
+Another open question is whether the overload taking `IComparable<T>` is necessary.
+
+Also, these might be added simply to `SpanExtensions` since `ReadOnlySpanExtensions` might be combined into the former.
 
 The API relies on being able to depend upon `System.Collections.Generic`, could this be an issue?
 
@@ -204,6 +214,7 @@ The API relies on being able to depend upon `System.Collections.Generic`, could 
 
 ### Updates
 UPDATE 1: Add link to Sort and point on the pattern used.
+UPDATE 2: Add IComparable<T> overloads for convenience as suggested by @jkotas
 
 ### Existing Sort APIs
 A non-exhaustive list of existing binary search APIs is given below for comparison.

@@ -13,6 +13,10 @@ namespace System
 
     public static class ReadOnlySpanExtensions
     {
+        // Convenience overload, that is thin wrapper around generic TComparable version
+        public static int BinarySearch<T>(this ReadOnlySpan<T> span, IComparable<T> comparable) 
+        { return BinarySearch<T, IComparable<T>>(span, comparable); }
+
         public static int BinarySearch<T, TComparable>(this ReadOnlySpan<T> span, TComparable comparable) 
             where TComparable : IComparable<T> 
         { throw null; }
@@ -24,6 +28,10 @@ namespace System
 
     public static class SpanExtensions
     {
+        // Convenience overload, that is thin wrapper around generic TComparable version
+        public static int BinarySearch<T>(this Span<T> span, IComparable<T> comparable) 
+        { return BinarySearch<T, IComparable<T>>(span, comparable); }
+
         // NOTE: Due to the less-than-ideal generic type inference in the face of implicit conversions,
         //       we need the overloads taking Span<T>. These simply forward to ReadOnlySpanExtensions.
         public static int BinarySearch<T, TComparable>(this Span<T> span, TComparable comparable) 
