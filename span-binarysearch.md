@@ -1,13 +1,13 @@
 Currently, there is no way to binary search in sorted native or fixed memory (e.g. coming from a pointer) in .NET, this proposal intends to fix that by adding binary search extension methods to `ReadOnlySpan<T>` (and currently also `Span<T>` due to type inference issues), but also proposes some different overloads than seen on `Array` to allow for inlined comparisons via the possibility to use value type comparables and comparers.
 
 ### Proposed API
-Add a set of `BinarySearch` extension methods to `ReadOnlySpan<T>` in `ReadOnlySpanExtensions`, 
-(and currently the same for normal `Span<T>` due to generic type inference issues):
+Add a set of `BinarySearch` extension methods for `ReadOnlySpan<T>` and `Span<T>` in `SpanExtensions`:
 ```csharp
-    public static class ReadOnlySpanExtensions
+    public static class SpanExtensions
     {
         // Convenience overload
-        public static int BinarySearch<T>(this ReadOnlySpan<T> span, IComparable<T> comparable) 
+        public static int BinarySearch<T>(
+            this ReadOnlySpan<T> span, IComparable<T> comparable) 
         { return BinarySearch<T, IComparable<T>>(span, comparable); }
 
         public static int BinarySearch<T, TComparable>(
@@ -19,27 +19,26 @@ Add a set of `BinarySearch` extension methods to `ReadOnlySpan<T>` in `ReadOnlyS
             this ReadOnlySpan<T> span, T value, TComparer comparer) 
             where TComparer : IComparer<T>
         { throw null; }
-    }
-
-    public static class SpanExtensions
-    {
-        // Convenience overload
-        public static int BinarySearch<T>(this Span<T> span, IComparable<T> comparable) 
-        { return BinarySearch<T, IComparable<T>>(span, comparable); }
 
         // NOTE: Due to the less-than-ideal generic type inference 
         //       in the face of implicit conversions,
         //       we need the overloads taking Span<T>. 
         //       These simply forward to ReadOnlySpanExtensions.
+
+        // Convenience overload
+        public static int BinarySearch<T>(
+            this Span<T> span, IComparable<T> comparable) 
+        { return BinarySearch<T, IComparable<T>>(span, comparable); }
+
         public static int BinarySearch<T, TComparable>(
             this Span<T> span, TComparable comparable) 
             where TComparable : IComparable<T> 
-        { return ReadOnlySpanExtensions.BinarySearch<T, TComparable>(span, comparable); }
+        { return BinarySearch<T, TComparable>((ReadOnlySpan<T>)span, comparable); }
 
         public static int BinarySearch<T, TComparer>(
             this Span<T> span, T value, TComparer comparer) 
             where TComparer : IComparer<T>
-        { return ReadOnlySpanExtensions.BinarySearch(span, value, comparer); }
+        { return BinarySearch((ReadOnlySpan<T>)span, value, comparer); }
     }
 ```
 
@@ -206,8 +205,6 @@ An important question regarding this proposal is whether the pattern with generi
 
 Another open question is whether the overload taking `IComparable<T>` is necessary.
 
-Also, these might be added simply to `SpanExtensions` since `ReadOnlySpanExtensions` might be combined into the former.
-
 The API relies on being able to depend upon `System.Collections.Generic`, could this be an issue?
 
 @karelz @jkotas @KrzysztofCwalina @jamesqo
@@ -215,6 +212,7 @@ The API relies on being able to depend upon `System.Collections.Generic`, could 
 ### Updates
 UPDATE 1: Add link to Sort and point on the pattern used.
 UPDATE 2: Add IComparable<T> overloads for convenience as suggested by @jkotas
+UPDATE 3: Combine all extensions into `SpanExtensions`.
 
 ### Existing Sort APIs
 A non-exhaustive list of existing binary search APIs is given below for comparison.

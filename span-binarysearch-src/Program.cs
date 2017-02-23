@@ -11,36 +11,42 @@ namespace System
 
     public struct ReadOnlySpan<T> { }
 
-    public static class ReadOnlySpanExtensions
-    {
-        // Convenience overload
-        public static int BinarySearch<T>(this ReadOnlySpan<T> span, IComparable<T> comparable) 
-        { return BinarySearch<T, IComparable<T>>(span, comparable); }
-
-        public static int BinarySearch<T, TComparable>(this ReadOnlySpan<T> span, TComparable comparable) 
-            where TComparable : IComparable<T> 
-        { throw null; }
-
-        public static int BinarySearch<T, TComparer>(this ReadOnlySpan<T> span, T value, TComparer comparer) 
-            where TComparer : IComparer<T>
-        { throw null; }
-    }
-
     public static class SpanExtensions
     {
         // Convenience overload
-        public static int BinarySearch<T>(this Span<T> span, IComparable<T> comparable) 
+        public static int BinarySearch<T>(
+            this ReadOnlySpan<T> span, IComparable<T> comparable) 
         { return BinarySearch<T, IComparable<T>>(span, comparable); }
 
-        // NOTE: Due to the less-than-ideal generic type inference in the face of implicit conversions,
-        //       we need the overloads taking Span<T>. These simply forward to ReadOnlySpanExtensions.
-        public static int BinarySearch<T, TComparable>(this Span<T> span, TComparable comparable) 
+        public static int BinarySearch<T, TComparable>(
+            this ReadOnlySpan<T> span, TComparable comparable) 
             where TComparable : IComparable<T> 
-        { return ReadOnlySpanExtensions.BinarySearch<T, TComparable>(span, comparable); }
+        { throw null; }
 
-        public static int BinarySearch<T, TComparer>(this Span<T> span, T value, TComparer comparer) 
+        public static int BinarySearch<T, TComparer>(
+            this ReadOnlySpan<T> span, T value, TComparer comparer) 
             where TComparer : IComparer<T>
-        { return ReadOnlySpanExtensions.BinarySearch(span, value, comparer); }
+        { throw null; }
+
+        // NOTE: Due to the less-than-ideal generic type inference 
+        //       in the face of implicit conversions,
+        //       we need the overloads taking Span<T>. 
+        //       These simply forward to ReadOnlySpanExtensions.
+
+        // Convenience overload
+        public static int BinarySearch<T>(
+            this Span<T> span, IComparable<T> comparable) 
+        { return BinarySearch<T, IComparable<T>>(span, comparable); }
+
+        public static int BinarySearch<T, TComparable>(
+            this Span<T> span, TComparable comparable) 
+            where TComparable : IComparable<T> 
+        { return BinarySearch<T, TComparable>((ReadOnlySpan<T>)span, comparable); }
+
+        public static int BinarySearch<T, TComparer>(
+            this Span<T> span, T value, TComparer comparer) 
+            where TComparer : IComparer<T>
+        { return BinarySearch((ReadOnlySpan<T>)span, value, comparer); }
     }
 
     public static class UsageForInt
