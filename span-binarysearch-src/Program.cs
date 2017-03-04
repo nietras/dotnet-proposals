@@ -21,12 +21,12 @@ namespace System
         public static int BinarySearch<T, TComparable>(
             this ReadOnlySpan<T> span, TComparable comparable) 
             where TComparable : IComparable<T> 
-        { throw null; }
+        { return -1; }
 
         public static int BinarySearch<T, TComparer>(
             this ReadOnlySpan<T> span, T value, TComparer comparer) 
             where TComparer : IComparer<T>
-        { throw null; }
+        { return -1; }
 
         // NOTE: Due to the less-than-ideal generic type inference 
         //       in the face of implicit conversions,
@@ -51,7 +51,7 @@ namespace System
 
     public static class UsageForInt
     {
-        struct InlineableComparer : IComparer<int>
+        struct InlineableIntComparer : IComparer<int>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int Compare(int a, int b)
@@ -62,11 +62,29 @@ namespace System
             }
         }
 
-        struct InlineableComparable : IComparable<int>
+        struct InlineableIntComparable : IComparable<int>
         {
             int m_value;
             
-            public InlineableComparable(int value)
+            public InlineableIntComparable(int value)
+            {
+                m_value = value;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public int CompareTo(int other)
+            {
+                if (m_value == other) { return 0; }
+                if (m_value < other) { return -1; }
+                return 1;
+            }
+        }
+
+        class IntComparable : IComparable<int>
+        {
+            int m_value;
+            
+            public IntComparable(int value)
             {
                 m_value = value;
             }
@@ -91,13 +109,24 @@ namespace System
             // Direct value
             var index = span.BinarySearch(valueToFind);
 
-            // Inlineable struct comparer
-            var comparer = new InlineableComparer();
-            index = span.BinarySearch(valueToFind, comparer);
+            // Comparable
+            var comparable = new IntComparable(valueToFind);
+            index = span.BinarySearch(comparable);
+
+            // IComparable
+            IComparable<int> icomparable = new IntComparable(valueToFind);
+            index = span.BinarySearch(icomparable);
 
             // Inlineable struct comparable
-            var comparable = new InlineableComparable(valueToFind);
-            index = span.BinarySearch(comparable);
+            var inlineableComparable = new InlineableIntComparable(valueToFind);
+            index = span.BinarySearch(inlineableComparable);
+
+            // Inlineable struct comparer
+            var inlineableComparer = new InlineableIntComparer();
+            index = span.BinarySearch(valueToFind, inlineableComparer);
+
+            // Default comparer
+            index = span.BinarySearch(valueToFind, Comparer<int>.Default);
         }
 
         public static void ReadOnlySpanBinarySearch()
@@ -110,14 +139,25 @@ namespace System
 
             // Direct value
             var index = span.BinarySearch(valueToFind);
+            
+            // Comparable
+            var comparable = new IntComparable(valueToFind);
+            index = span.BinarySearch(comparable);
 
-            // Inlineable struct comparer
-            var comparer = new InlineableComparer();
-            index = span.BinarySearch(valueToFind, comparer);
+            // IComparable
+            IComparable<int> icomparable = new IntComparable(valueToFind);
+            index = span.BinarySearch(icomparable);
 
             // Inlineable struct comparable
-            var comparable = new InlineableComparable(valueToFind);
-            index = span.BinarySearch(comparable);
+            var inlineableComparable = new InlineableIntComparable(valueToFind);
+            index = span.BinarySearch(inlineableComparable);
+
+            // Inlineable struct comparer
+            var inlineableComparer = new InlineableIntComparer();
+            index = span.BinarySearch(valueToFind, inlineableComparer);
+
+            // Default comparer
+            index = span.BinarySearch(valueToFind, Comparer<int>.Default);
         }
     }
 
