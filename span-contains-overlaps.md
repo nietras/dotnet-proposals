@@ -33,49 +33,69 @@ buffer contains a given span.
 #### Expected Results
 TODO: Make table of expected results for the different cases:
 
- - `first` entirely before `second`, no overlap
+ - **A**: `first` entirely before `second`, no overlap
 ```
 first:   [--------)
          xRef     xRef + xLength
 second:           [------------)     
                   yRef         yRef + yLength
 ```
- - `first` starts before `second` and ends inside `second`
+ - **B**: `first` starts before `second` and ends inside `second`
 ```
 first:   [------------)
          xRef         xRef + xLength
 second:              [------------)     
                      yRef         yRef + yLength
 ```
- - `first` is entirely contained in `second`
+ - **C**: `first` is entirely contained in `second`
 ```
 first:       [-----------------------)
              xRef                    xRef + xLength
 second:    [--------------------------)     
            yRef                       yRef + yLength
 ```
- - `first` starts inside target `second` and ends after `second` end
+ - **D**: `first` starts inside target `second` and ends after `second` end
 ```
 first:            [------)
                   xRef   xRef + xLength
 second:    [-------)
            yRef   .            yRef + yLength
 ```
- - `first` entirely after `second`, no overlap
+ - **E**: `first` entirely after `second`, no overlap
 ```
 first:            [------------)     
-                  yRef         yRef + yLength
+                  xRef         xRef + xLength
 second:  [--------)
-         xRef     xRef + xLength
+         yRef     yRef + yLength
 ```
- - `first` starts before or at the start of `second` and 
-   ends after or at the end of `second`, i.e. `second` is contained in `first`
+ - **F**: `first` starts before `second` and 
+   ends after `second`, i.e. `second` is contained in `first`
 ```
 first:   [-------------------------------)
          xRef                            xRef + xLength
 second:    [--------------------------)     
            yRef                       yRef + yLength
 ```
+ - **G**: `first` is same as `second`
+```
+first:   [--------------------------)
+         xRef                       xRef + xLength
+second:  [--------------------------)     
+         yRef                       yRef + yLength
+```
+
+In table below `Overlaps => first.Overlaps(second)` or `Contains => first.Contains(second)`. `x => first` and `y => second`.
+Needs to be reviewed.
+|        |`Overlaps` |`Contains` |`` | 
+|--------|-----------|-----------|---------------|
+|**A**   |`false`    |`false`    |`elementIndex >= xLength`   |
+|**B**   |`true`     |`false`    |`elementIndex > 0 && elementIndex < xLength`    |
+|**C**   |`true`     |`false`    |`elementIndex <= 0`    |
+|**D**   |`true`     |`false`    |`elementIndex < 0 && elementIndex > -yLength` |
+|**E**   |`false`    |`false`    |`elementIndex < (-yLength + 1)` |
+|**F**   |`true`     |`false`    |`elementIndex < xLength`    |
+|**G**   |`true`     |`true`     |`elementIndex == 0 && xLength == yLength` |
+
 
 And empty spans. `null` spans?
 
