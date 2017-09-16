@@ -238,6 +238,49 @@ namespace System
             var comparable = new InlineableFeatureComparable(featureValueToFind);
             index = span.BinarySearch(comparable);
         }
+
+private unsafe static bool IsSliceOf<T>(ref T childRef, int childLength, ref T parentRef, int parentLength, out int start) where T : struct
+{
+    IntPtr nativeByteOffset = Unsafe.ByteOffset(ref parentRef, ref childRef);
+    // TODO: Rewrite to use nint if/when C# supports this, see ???
+    if (sizeof(int) == sizeof(IntPtr))
+    {
+        int byteOffset = (int)nativeByteOffset;
+        int elementSize = Unsafe.SizeOf<T>();
+
+        if (byteOffset >= 0) // parent must start earlier (or equal start)
+        {
+            var elementOffset = byteOffset / elementSize;
+            if ((childLength + elementOffset) <= parentLength) // parent must end later (or equal end)
+            {
+                if ((byteOffset - elementOffset * elementSize) == 0) // must have equal alignment re T
+                {
+                    start = elementOffset;
+                    return true;
+                }
+            }
+        }
+    }
+    else
+    {
+        long byteOffset = (int)nativeByteOffset;
+        long elementSize = Unsafe.SizeOf<T>();
+
+        if (byteOffset >= 0) // parent must start earlier (or equal start)
+        {
+            var elementOffset = byteOffset / elementSize;
+            if ((childLength + elementOffset) <= parentLength) // parent must end later (or equal end)
+            {
+                if ((byteOffset - elementOffset * elementSize) == 0) // must have equal alignment re T
+                {
+                    start = (int)elementOffset;
+                    return true;
+                }
+            }
+        }
+    }
+}
+        
     }
 
     public static class Program
