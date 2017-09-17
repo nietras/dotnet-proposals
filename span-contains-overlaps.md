@@ -14,6 +14,7 @@ public static class SpanExtensions
     public static bool Overlaps<T>(this ReadOnlySpan<T> first, ReadOnlySpan<T> second, out int elementIndex);
     public static bool Contains<T>(this ReadOnlySpan<T> first, ReadOnlySpan<T> second);
     public static bool Contains<T>(this ReadOnlySpan<T> first, ReadOnlySpan<T> second, out int elementIndex);}
+}
 ```
 In case of the `second` not matching the alignment of `first` span 
 or the alignment of type `T` an `ArgumentException` is thrown.
@@ -85,15 +86,15 @@ second:  [--------------------------)
 ```
 
 In table below `Overlaps => first.Overlaps(second)` or `Contains => first.Contains(second)`. `x => first` and `y => second`.
-Needs to be reviewed.
-|        |`Overlaps` |`Contains` |`` | 
+Needs to be reviewed! Note this relies on `elementIndex` always being output, regardsless of `false` or `true` is returned.
+|        |`Overlaps` |`Contains` |Extra checks | 
 |--------|-----------|-----------|---------------|
 |**A**   |`false`    |`false`    |`elementIndex >= xLength`   |
 |**B**   |`true`     |`false`    |`elementIndex > 0 && elementIndex < xLength`    |
-|**C**   |`true`     |`false`    |`elementIndex <= 0`    |
+|**C**   |`true`     |`false`    |`elementIndex <= 0 && (yLenght + elementIndex) >= xLength`    |
 |**D**   |`true`     |`false`    |`elementIndex < 0 && elementIndex > -yLength` |
-|**E**   |`false`    |`false`    |`elementIndex < (-yLength + 1)` |
-|**F**   |`true`     |`false`    |`elementIndex < xLength`    |
+|**E**   |`false`    |`false`    |`elementIndex <= -yLength` |
+|**F**   |`true`     |`true`    |`elementIndex > 0`    |
 |**G**   |`true`     |`true`     |`elementIndex == 0 && xLength == yLength` |
 
 
