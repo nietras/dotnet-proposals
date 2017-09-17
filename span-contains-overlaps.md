@@ -1,29 +1,24 @@
-This proposal adds utility methods for checking spans for overlaps 
-or if a span is contained in another span.
-For previous discussions see https://github.com/dotnet/corefx/issues/17793,
- https://github.com/dotnet/corefxlab/issues/827 and 
-https://github.com/dotnet/corefx/issues/18750. 
-And a closed PR https://github.com/dotnet/corefx/pull/18731.
+This proposal adds utility methods for checking spans for overlaps or if a span is contained in another span. For previous discussions see https://github.com/dotnet/corefx/issues/17793, https://github.com/dotnet/corefxlab/issues/827 and https://github.com/dotnet/corefx/issues/18750. And a closed PR https://github.com/dotnet/corefx/pull/18731.
 
 ### Proposed API
-Add two set of  extension methods `Contains` and `Overlaps` for `ReadOnlySpan<T>` in `SpanExtensions`:
+Add two sets of  extension methods `Contains` and `Overlaps` for `ReadOnlySpan<T>` in `SpanExtensions`:
 ```csharp
 public static class SpanExtensions
 {
     public static bool Overlaps<T>(this ReadOnlySpan<T> first, ReadOnlySpan<T> second);
-    public static bool Overlaps<T>(this ReadOnlySpan<T> first, ReadOnlySpan<T> second, out int elementIndex);
+    public static bool Overlaps<T>(this ReadOnlySpan<T> first, ReadOnlySpan<T> second, 
+        out int elementIndex);
     public static bool Contains<T>(this ReadOnlySpan<T> first, ReadOnlySpan<T> second);
-    public static bool Contains<T>(this ReadOnlySpan<T> first, ReadOnlySpan<T> second, out int elementIndex);}
+    public static bool Contains<T>(this ReadOnlySpan<T> first, ReadOnlySpan<T> second, 
+        out int elementIndex);}
 }
 ```
-In case of the `second` not matching the alignment of `first` span 
-or the alignment of type `T` an `ArgumentException` is thrown.
+In case of the `second` not matching the alignment of `first` span an `ArgumentException` is thrown.
 
-The `out int elementIndex` is the relative index of the start of 
-the `second` span to the start pf the `first` span.
+The `out int elementIndex` is the relative index of the start of the `second` span to the start of the `first` span.
 
 ### Rationale and Usage
-For `Overlaps` the scenario can involve algorithms transform elements from `first` to `second` span, 
+For `Overlaps` the scenario can involve algorithms that transform elements from `first` to `second` span, 
 if the spans overlap the result might be wrong depending on the algorithm. To be able to detect this
 the `Overlaps` method can be called.
 
@@ -86,19 +81,19 @@ second:  [--------------------------)
 ```
 
 In table below `Overlaps => first.Overlaps(second)` or `Contains => first.Contains(second)`. `x => first` and `y => second`.
-Needs to be reviewed! Note this relies on `elementIndex` always being output, regardsless of `false` or `true` is returned.
+Needs to be reviewed! Note this relies on `elementIndex` always being output, regardsless if `false` or `true` is returned.
+
 |        |`Overlaps` |`Contains` |Extra checks | 
 |--------|-----------|-----------|---------------|
 |**A**   |`false`    |`false`    |`elementIndex >= xLength`   |
 |**B**   |`true`     |`false`    |`elementIndex > 0 && elementIndex < xLength`    |
-|**C**   |`true`     |`false`    |`elementIndex <= 0 && (yLenght + elementIndex) >= xLength`    |
+|**C**   |`true`     |`false`    |`elementIndex <= 0 && (yLength + elementIndex) >= xLength`    |
 |**D**   |`true`     |`false`    |`elementIndex < 0 && elementIndex > -yLength` |
 |**E**   |`false`    |`false`    |`elementIndex <= -yLength` |
-|**F**   |`true`     |`true`    |`elementIndex > 0`    |
+|**F**   |`true`     |`true`    |`elementIndex >= 0`    |
 |**G**   |`true`     |`true`     |`elementIndex == 0 && xLength == yLength` |
 
-
-And empty spans. `null` spans?
+TODO: Empty spans? `null` spans?
 
 #### Examples
 TODO: Add more examples of usage.
@@ -120,16 +115,13 @@ public static void RepeatEvenIndices(ReadOnlySpan<byte> src, Span<byte> dst)
 ```
 
 ### Open Questions
-Naming is still open. Especially, I am concerned with `Contains` 
-being confused with checking if values are contained and not 
-whether the slice/span is contained. To be explicit we could 
-name these `OverlapsSlice`/`ContainsSlice`.
+Naming is still open. Especially, I am concerned with `Contains` being confused with checking if values are contained and not whether the slice/span is contained. To be explicit we could name these `OverlapsSlice`/`ContainsSlice`.
 
-Could this API be expressed differently, perhaps with an all 
-encompassing `Overlap` method returning an enum? 
-Performance downsides?
+Could this API be expressed differently, perhaps with an all encompassing `Overlap` method returning an enum? Performance downsides?
 
 Should the method return `true` or `false` if one or both of the spans are empty?
 
 ### Updates
 None yet.
+
+cc: @ektrah @mgravell @ahsonkhan @shiftylogic @jkotas 
